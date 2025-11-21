@@ -40,11 +40,6 @@ class IndexView(APIView):
     def get(self, request):
         return render(request, 'news_feed.html')
 
-class HomepageView(APIView):
-    def get(self, request):
-        return render(request, 'homepage.html')
-
-
 class CategorizedArticlesView(APIView):
     def get(self, request):
         categorized_articles = get_categorized_articles()
