@@ -2,6 +2,7 @@ import json
 import hashlib
 import re # Added for SimHash tokenization
 from collections import defaultdict # Added for SimHashTendencyAnalyzer
+import random # Added for random sample headline selection
 from news.hasher import simhash_news_object, get_hamming_distance # Import necessary SimHash functions
 
 class ArticleCategorizer:
@@ -115,10 +116,17 @@ class SimHashTendencyAnalyzer:
             
             # Get a sample headline from an article belonging to the most frequent category
             sample_headline = 'No Headline'
-            for article in articles_in_bucket:
-                if article.get('category') == most_frequent_category:
-                    sample_headline = article.get('headline', 'No Headline')
-                    break # Found a headline from the most frequent category
+            
+            # Collect all articles from the most frequent category within this bucket
+            articles_of_most_frequent_category = [
+                article for article in articles_in_bucket 
+                if article.get('category') == most_frequent_category
+            ]
+
+            if articles_of_most_frequent_category:
+                # Pick a random article's headline from this subset
+                sample_article = random.choice(articles_of_most_frequent_category)
+                sample_headline = sample_article.get('headline', 'No Headline')
             
             top_tendencies.append({
                 "topic": most_frequent_category,
