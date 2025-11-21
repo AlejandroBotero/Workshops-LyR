@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to the News App</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body>
+    <header class="container mt-4">
+        <h1 class="text-center">Welcome to the Real-Time News Analysis App</h1>
+    </header>
+    <main class="container mt-4">
+        <section>
+            <h2>How to Use This Application</h2>
+            <p>This application provides real-time analysis of news articles.</p>
+            <p>To view the live news feed and statistics, please visit the news page:</p>
+            <a href="/api/" class="btn btn-primary">View News Feed</a>
+        </section>
+
+        <section class="mt-5">
+            <h2>For Developers</h2>
+            <p>You can simulate new news articles being submitted by running the <code>news_submitter.py</code> script. This will send new articles to the backend, and you will see the updates in real-time on the news feed page.</p>
+            <p>The backend is built with Django and uses Server-Sent Events (SSE) to push updates to the clients.</p>
+        </section>
+    </main>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>

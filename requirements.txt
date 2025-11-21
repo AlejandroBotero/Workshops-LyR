@@ -1,0 +1,4 @@
+faker
+django
+djangorestframework
+requests
