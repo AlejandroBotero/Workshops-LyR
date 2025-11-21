@@ -91,44 +91,11 @@
             </div>
         </div>
 
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Bloom Filter Statistics</h2>
-                    </div>
-                    <div class="card-body" id="bloom-filter-stats">
-                        <p class="text-muted">Waiting for Bloom Filter statistics...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h2>MinWise Sampled Articles</h2>
-                    </div>
-                    <div class="card-body" id="minwise-samples">
-                        <p class="text-muted">Waiting for MinWise samples...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Flajolet-Martin Distinct Count Estimate</h2>
-                    </div>
-                    <div class="card-body" id="flajolet-martin-stats">
-                        <p class="text-muted">Waiting for estimate...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+
+
+
 
         <div class="row mt-4">
             <div class="col-md-12">
@@ -155,9 +122,6 @@
         const statisticsTextDiv = document.getElementById('statistics-text');
         const lastNInput = document.getElementById('lastNInput');
         const lastNValueDisplay = document.getElementById('lastNValueDisplay');
-        const bloomFilterStatsDiv = document.getElementById('bloom-filter-stats');
-        const minwiseSamplesDiv = document.getElementById('minwise-samples');
-        const flajoletMartinStatsDiv = document.getElementById('flajolet-martin-stats');
         const topTendenciesDiv = document.getElementById('top-tendencies');
 
         let eventSource;
@@ -346,68 +310,11 @@
                     });
                 }
 
-                // Update Bloom Filter statistics
-                const bfStats = stats.bloom_filter;
-                bloomFilterStatsDiv.innerHTML = `
-                    <p><strong>Total articles processed:</strong> <span class="badge bg-info">${bfStats.total_processed}</span></p>
-                    <p><strong>Unique articles added to filter:</strong> <span class="badge bg-success">${bfStats.unique_added}</span></p>
-                    <p><strong>Redundant articles caught:</strong> <span class="badge bg-warning">${bfStats.redundant_caught}</span></p>
-                    <hr>
-                    <h5>Bloom Filter Configuration</h5>
-                    <dl class="row">
-                        <dt class="col-sm-4">Capacity:</dt>
-                        <dd class="col-sm-8">${bfStats.capacity}</dd>
-                        <dt class="col-sm-4">Error Rate:</dt>
-                        <dd class="col-sm-8">${bfStats.error_rate}</dd>
-                        <dt class="col-sm-4">Number of Bits (m):</dt>
-                        <dd class="col-sm-8">${bfStats.num_bits}</dd>
-                        <dt class="col-sm-4">Number of Hash Functions (k):</dt>
-                        <dd class="col-sm-8">${bfStats.num_hashes}</dd>
-                    </dl>
-                    <p><strong>Bloom Filter current count (items added):</strong> <span class="badge bg-primary">${bfStats.bloom_filter_count}</span></p>
-                    <p><strong>Raw Bit Array:</strong></p>
-                    <textarea class="form-control" rows="5" readonly>${bfStats.bit_array}</textarea>
-                `;
 
-                // Update MinWise Sampled Articles
-                const minwiseSamples = stats.minwise_samples;
-                let minwiseHtml = '';
-                if (Object.keys(minwiseSamples).length > 0) {
-                    for (const category in minwiseSamples) {
-                        minwiseHtml += `
-                            <div class="card mb-2">
-                                <div class="card-header" id="heading${category}">
-                                    <h5 class="mb-0">
-                                        <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#collapse${category}" aria-expanded="true" aria-controls="collapse${category}">
-                                            Category: ${category}
-                                        </button>
-                                    </h5>
-                                </div>
-                                <div id="collapse${category}" class="collapse" aria-labelledby="heading${category}" data-bs-parent="#minwise-samples-accordion">
-                                    <div class="card-body">
-                                        <ul class="list-group">
-                                            ${minwiseSamples[category].map(article => `
-                                                <li class="list-group-item">
-                                                    <strong>Headline:</strong> ${article.headline}<br>
-                                                    <strong>Content:</strong> ${article.content.substring(0, 100)}...
-                                                </li>
-                                            `).join('')}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                    minwiseSamplesDiv.innerHTML = `<div class="accordion" id="minwise-samples-accordion">${minwiseHtml}</div>`;
-                } else {
-                    minwiseSamplesDiv.innerHTML = '<p class="text-muted">No MinWise samples available yet.</p>';
-                }
 
-                // Update Flajolet-Martin estimate
-                const fmEstimate = stats.flajolet_martin_estimate;
-                flajoletMartinStatsDiv.innerHTML = `
-                    <p><strong>Estimated Unique Articles:</strong> <span class="badge bg-primary">${fmEstimate}</span></p>
-                `;
+
+
+
 
                 // Update Top Tendencies
                 const topTendencies = stats.top_tendencies;
