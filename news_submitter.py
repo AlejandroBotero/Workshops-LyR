@@ -26,7 +26,7 @@ def delete_all_data():
 def submit_news():
     url = "http://127.0.0.1:8000/api/submit/"
     delete_all_data()
-    while True:
+    for _ in range(100):
         article = generate_news_article()
         try:
             print("before posting")

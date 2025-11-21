@@ -5,11 +5,13 @@ from django.views import View
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .utils import ArticleCategorizer, TrendAnalyzer
+from .hasher import simhash_news_object, compare_news_objects # Import simhash_news_object, compare_news_objects
 from .sse_utils import sse_queue
 from .bloom_filter import BloomFilter # Import Bloom Filter
 from .minwise_sampler import MinWiseSampler # Import MinWiseSampler
 from .flajolet_martin import FlajoletMartin # Import FlajoletMartin
 from .ams_moment import AMSMomentEstimator # Import AMSMomentEstimator
+from .utils import SimHashTendencyAnalyzer # Import SimHashTendencyAnalyzer
 import json
 import time
 import queue
@@ -33,6 +35,12 @@ flajolet_martin_instance = FlajoletMartin(num_bits=32, num_hash_functions=5) # 5
 
 # Global AMS Moment Estimator
 ams_estimator_instance = AMSMomentEstimator(num_estimators=10) # 10 estimators for better accuracy
+
+# Global SimHash Tendency Analyzer
+simhash_tendency_analyzer_instance = SimHashTendencyAnalyzer(similarity_threshold=3) # Use a similarity threshold
+
+# Global variable to store the hash of the last article for similarity comparison
+last_full_article = None
 
 
 def get_categorized_articles():
@@ -63,7 +71,13 @@ def get_full_trend_analysis():
         if os.path.exists(NEWS_DATA_PATH):
             with open(NEWS_DATA_PATH, 'r') as file:
                 news_data = json.load(file)
-            full_trend_analysis = get_trend_analysis(news_data)
+            
+            category_counts = {}
+            for article in news_data:
+                category = article.get('category', 'unknown')
+                category_counts[category] = category_counts.get(category, 0) + 1
+            
+            full_trend_analysis = category_counts
             cache.set('full_trend_analysis', full_trend_analysis)
         else:
             full_trend_analysis = {} # Return empty if no data file
@@ -87,6 +101,7 @@ class SubmitNewsApiView(APIView):
     def post(self, request):
         global total_articles_processed, unique_articles_added, redundant_articles_caught
         new_article = request.data
+        print("\n\ngotten new article: \n", new_article)
         
         # Prepare article identifier for Bloom Filter
         article_identifier = f"{new_article.get('headline', '')}-{new_article.get('content', '')}"
@@ -112,6 +127,9 @@ class SubmitNewsApiView(APIView):
         # Add article to MinWise Sampler
         minwise_sampler_instance.add_article(new_article, category)
 
+        # Add article to SimHash Tendency Analyzer
+        simhash_tendency_analyzer_instance.add_article(new_article)
+
         # Invalidate the cache
         cache.delete('categorized_articles')
         cache.delete('full_trend_analysis')
@@ -122,9 +140,18 @@ class SubmitNewsApiView(APIView):
         return Response({"status": "success", "message": "Article submitted successfully."})
 
 def _event_stream_generator(request):
+    global last_full_article # Declare global to modify it
     while True:
         try:
-            article = sse_queue.get(timeout=10) # Wait for a new article
+            current_article = sse_queue.get(timeout=10) # Wait for a new article
+            
+            similarity_distance = "N/A"
+            if last_full_article is not None:
+                similarity_distance = compare_news_objects(last_full_article, current_article)
+            
+            # Store the current article as the last one for the next iteration
+            last_news = last_full_article # Renaming for clarity to frontend
+            last_full_article = current_article
             
             # Recalculate categorized articles and full trend analysis
             categorized_articles = get_categorized_articles()
@@ -161,9 +188,14 @@ def _event_stream_generator(request):
                 }
             
             minwise_samples = minwise_sampler_instance.get_all_samples()
+            
+            # Get top tendencies from SimHash Tendency Analyzer
+            top_tendencies = simhash_tendency_analyzer_instance.get_top_tendencies()
 
             data = {
-                "new_article": article,
+                "new_article": current_article,
+                "last_news": last_news, # Pass the previous full article
+                "similarity": similarity_distance, # Pass the Hamming distance
                 "statistics": {
                     "total_articles": sum(len(articles) for articles in categorized_articles.values()),
                     "category_counts": {category: len(articles) for category, articles in categorized_articles.items()},
@@ -174,6 +206,7 @@ def _event_stream_generator(request):
                     "minwise_samples": minwise_samples, # Include MinWise Samples
                     "flajolet_martin_estimate": flajolet_martin_instance.estimate_distinct_count(), # Include FM estimate
                     "ams_second_moment_estimate": ams_estimator_instance.estimate_second_moment(), # Include AMS estimate
+                    "top_tendencies": top_tendencies, # Include top tendencies
                 }
             }
             
