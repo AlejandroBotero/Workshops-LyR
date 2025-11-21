@@ -4,13 +4,9 @@ from django.shortcuts import render
 from django.views import View
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .utils import ArticleCategorizer, TrendAnalyzer
+from .utils import ArticleCategorizer
 from .hasher import simhash_news_object, compare_news_objects # Import simhash_news_object, compare_news_objects
 from .sse_utils import sse_queue
-from .bloom_filter import BloomFilter # Import Bloom Filter
-from .minwise_sampler import MinWiseSampler # Import MinWiseSampler
-from .flajolet_martin import FlajoletMartin # Import FlajoletMartin
-from .ams_moment import AMSMomentEstimator # Import AMSMomentEstimator
 from .utils import SimHashTendencyAnalyzer # Import SimHashTendencyAnalyzer
 import json
 import time
@@ -19,22 +15,6 @@ import os
 import threading # Import threading for lock
 
 NEWS_DATA_PATH = 'news_data.json'
-
-# Global Bloom Filter and counters
-bloom_filter_instance = BloomFilter(capacity=10000, error_rate=0.01)
-total_articles_processed = 0
-unique_articles_added = 0
-redundant_articles_caught = 0
-bloom_filter_lock = threading.Lock() # Lock for thread-safe access to Bloom Filter and counters
-
-# Global MinWise Sampler
-minwise_sampler_instance = MinWiseSampler(sample_size=3) # Sample 3 articles per category
-
-# Global Flajolet-Martin estimator
-flajolet_martin_instance = FlajoletMartin(num_bits=32, num_hash_functions=5) # 5 estimators for better accuracy
-
-# Global AMS Moment Estimator
-ams_estimator_instance = AMSMomentEstimator(num_estimators=10) # 10 estimators for better accuracy
 
 # Global SimHash Tendency Analyzer
 simhash_tendency_analyzer_instance = SimHashTendencyAnalyzer(similarity_threshold=3) # Use a similarity threshold
@@ -92,36 +72,17 @@ class TrendAnalysisView(APIView):
 
 class SubmitNewsApiView(APIView):
     def post(self, request):
-        global total_articles_processed, unique_articles_added, redundant_articles_caught
         new_article = request.data
         print("\n\ngotten new article: \n", new_article)
         
-        # Prepare article identifier for Bloom Filter
-        article_identifier = f"{new_article.get('headline', '')}-{new_article.get('content', '')}"
-        
-        category = new_article.get('category', 'unknown') # Use original category for AMS
-
-        with bloom_filter_lock: # Acquire lock for thread-safe access
-            total_articles_processed += 1
-            if article_identifier in bloom_filter_instance:
-                redundant_articles_caught += 1
-            else:
-                bloom_filter_instance.add(article_identifier)
-                unique_articles_added += 1
-                flajolet_martin_instance.add(article_identifier) # Add to FM if unique
-                ams_estimator_instance.add(category) # Add category to AMS
+        # Add article to SimHash Tendency Analyzer
+        simhash_tendency_analyzer_instance.add_article(new_article)
 
         with open(NEWS_DATA_PATH, 'r+') as file:
             news_data = json.load(file)
             news_data.append(new_article)
             file.seek(0)
             json.dump(news_data, file, indent=4)
-
-        # Add article to MinWise Sampler
-        minwise_sampler_instance.add_article(new_article, category)
-
-        # Add article to SimHash Tendency Analyzer
-        simhash_tendency_analyzer_instance.add_article(new_article)
 
         # Invalidate the cache
         cache.delete('categorized_articles')
@@ -195,10 +156,6 @@ def _event_stream_generator(request):
                     "full_trend_analysis": full_trend_analysis,
                     "recent_trend_analysis": recent_trend_analysis,
                     "last_n": last_n, # Include last_n in the data
-                    "bloom_filter": bf_stats, # Include Bloom Filter statistics
-                    "minwise_samples": minwise_samples, # Include MinWise Samples
-                    "flajolet_martin_estimate": flajolet_martin_instance.estimate_distinct_count(), # Include FM estimate
-                    "ams_second_moment_estimate": ams_estimator_instance.estimate_second_moment(), # Include AMS estimate
                     "top_tendencies": top_tendencies, # Include top tendencies
                 }
             }
