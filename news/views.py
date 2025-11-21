@@ -52,18 +52,11 @@ def get_categorized_articles():
     return categorized_articles
 
 def get_trend_analysis(news_articles):
-    trend_analyzer = TrendAnalyzer(width=1000, depth=5)
+    category_counts = {}
     for article in news_articles:
-        category = article.get('category', 'unknown') # Use original category
-        popularity_score = article.get('popularity_score', 1) # Default to 1 if score is missing
-        trend_analyzer.add(category, weight=popularity_score)
-
-    categories_in_articles = set(article.get('category', 'unknown') for article in news_articles)
-    trend_analysis = {}
-    for category in categories_in_articles:
-        estimate = trend_analyzer.estimate(category)
-        trend_analysis[category] = estimate
-    return trend_analysis
+        category = article.get('category', 'unknown')
+        category_counts[category] = category_counts.get(category, 0) + 1
+    return category_counts
 
 def get_full_trend_analysis():
     full_trend_analysis = cache.get('full_trend_analysis')
