@@ -8,10 +8,17 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Chart.js Datalabels Plugin CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
 </head>
 <body>
     <div class="container my-4">
         <h1 class="text-center mb-4">Real-time News Statistics</h1>
+
+        <div class="mb-3">
+            <label for="lastNInput" class="form-label">Number of recent articles for trend analysis (X):</label>
+            <input type="number" class="form-control" id="lastNInput" value="5" min="1">
+        </div>
 
         <div class="row">
             <div class="col-md-6">
@@ -33,7 +40,49 @@
                         <div id="statistics-text">
                             <p class="text-muted">Waiting for statistics...</p>
                         </div>
+                        <h3 class="mt-3">Category Counts (All Articles)</h3>
                         <canvas id="categoryPieChart"></canvas>
+                        <h3 class="mt-3">Recent Trends (Last <span id="lastNValueDisplay">5</span> Articles)</h3>
+                        <canvas id="recentTrendsPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Bloom Filter Statistics</h2>
+                    </div>
+                    <div class="card-body" id="bloom-filter-stats">
+                        <p class="text-muted">Waiting for Bloom Filter statistics...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>MinWise Sampled Articles</h2>
+                    </div>
+                    <div class="card-body" id="minwise-samples">
+                        <p class="text-muted">Waiting for MinWise samples...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Flajolet-Martin Distinct Count Estimate</h2>
+                    </div>
+                    <div class="card-body" id="flajolet-martin-stats">
+                        <p class="text-muted">Waiting for estimate...</p>
                     </div>
                 </div>
             </div>
@@ -43,86 +92,277 @@
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
+        // Register the datalabels plugin globally
+        Chart.register(ChartDataLabels);
+
         const newArticleDiv = document.getElementById('new-article');
-        const statisticsTextDiv = document.getElementById('statistics-text'); // New reference for textual stats
-        const eventSource = new EventSource('/api/stream/');
+        const statisticsTextDiv = document.getElementById('statistics-text');
+        const lastNInput = document.getElementById('lastNInput');
+        const lastNValueDisplay = document.getElementById('lastNValueDisplay');
+        const bloomFilterStatsDiv = document.getElementById('bloom-filter-stats');
+        const minwiseSamplesDiv = document.getElementById('minwise-samples');
+        const flajoletMartinStatsDiv = document.getElementById('flajolet-martin-stats');
 
-        let categoryPieChart; // Declare chart variable globally
+        let eventSource;
+        let categoryPieChart;
+        let recentTrendsPieChart;
 
-        eventSource.onmessage = function(event) {
-            if (event.data.startsWith(':heartbeat')) {
-                console.log('Heartbeat received');
-                return;
+        function connectSSE(lastNValue) {
+            if (eventSource) {
+                eventSource.close();
+                console.log('EventSource closed.');
             }
-            
-            const data = JSON.parse(event.data);
-            
-            // Display the new article
-            const article = data.new_article;
-            newArticleDiv.innerHTML = `
-                <h3 class="card-title">${article.headline}</h3>
-                <p class="card-text"><strong>Category:</strong> <span class="badge bg-info text-dark">${article.category}</span></p>
-                <p class="card-text">${article.content}</p>
-            `;
+            lastNValueDisplay.textContent = lastNValue;
+            eventSource = new EventSource(`/api/stream/?last_n=${lastNValue}`);
+            console.log(`EventSource connected to /api/stream/?last_n=${lastNValue}`);
 
-            // Update the textual statistics
-            const stats = data.statistics;
-            statisticsTextDiv.innerHTML = `
-                <p class="card-text"><strong>Total Articles:</strong> <span class="badge bg-primary">${stats.total_articles}</span></p>
-                <h3 class="mt-3">Trend Analysis</h3>
-                <ul class="list-group">
-                    ${Object.entries(stats.trend_analysis).map(([category, estimate]) => `<li class="list-group-item d-flex justify-content-between align-items-center">${category}: <span class="badge bg-success">${estimate}</span></li>`).join('')}
-                </ul>
-            `;
-            
-            // Update the pie chart
-            const categoryCounts = stats.category_counts;
-            const labels = Object.keys(categoryCounts);
-            const dataValues = Object.values(categoryCounts);
+            eventSource.onmessage = function(event) {
+                if (event.data.startsWith(':heartbeat')) {
+                    console.log('Heartbeat received');
+                    return;
+                }
+                
+                const data = JSON.parse(event.data);
+                
+                // Display the new article
+                const article = data.new_article;
+                newArticleDiv.innerHTML = `
+                    <h3 class="card-title">${article.headline}</h3>
+                    <p class="card-text"><strong>Category:</strong> <span class="badge bg-info text-dark">${article.category}</span></p>
+                    <p class="card-text">${article.content}</p>
+                `;
 
-            if (categoryPieChart) {
-                categoryPieChart.data.labels = labels;
-                categoryPieChart.data.datasets[0].data = dataValues;
-                categoryPieChart.update();
-            } else {
-                const ctx = document.getElementById('categoryPieChart').getContext('2d');
-                categoryPieChart = new Chart(ctx, {
-                    type: 'pie',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: dataValues,
-                            backgroundColor: [
-                                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9900'
-                            ],
-                            hoverBackgroundColor: [
-                                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9900'
-                            ]
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                            },
-                            title: {
-                                display: true,
-                                text: 'Articles per Category'
+                // Update the textual statistics
+                const stats = data.statistics;
+                statisticsTextDiv.innerHTML = `
+                    <p class="card-text"><strong>Total Articles:</strong> <span class="badge bg-primary">${stats.total_articles}</span></p>
+                    <h3 class="mt-3">Full Trend Analysis (All Articles)</h3>
+                    <ul class="list-group">
+                        ${Object.entries(stats.full_trend_analysis).map(([category, estimate]) => `<li class="list-group-item d-flex justify-content-between align-items-center">${category}: <span class="badge bg-success">${estimate}</span></li>`).join('')}
+                    </ul>
+                `;
+                
+                // Update the category pie chart
+                const categoryCounts = stats.category_counts;
+                const categoryLabels = Object.keys(categoryCounts);
+                const categoryDataValues = Object.values(categoryCounts);
+
+                if (categoryPieChart) {
+                    categoryPieChart.data.labels = categoryLabels;
+                    categoryPieChart.data.datasets[0].data = categoryDataValues;
+                    categoryPieChart.update();
+                } else {
+                    const ctx = document.getElementById('categoryPieChart').getContext('2d');
+                    categoryPieChart = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: categoryLabels,
+                            datasets: [{
+                                data: categoryDataValues,
+                                backgroundColor: [
+                                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9900', '#FFCD56', '#4CAF50'
+                                ],
+                                hoverBackgroundColor: [
+                                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9900', '#FFCD56', '#4CAF50'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Articles per Category (All)'
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed !== null) {
+                                                label += context.parsed;
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                },
+                                datalabels: {
+                                    formatter: (value, context) => {
+                                        const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                        const percentage = (value * 100 / sum).toFixed(1) + "%";
+                                        return `${context.chart.data.labels[context.dataIndex]}\n(${value}) ${percentage}`;
+                                    },
+                                    color: '#fff',
+                                    font: {
+                                        weight: 'bold',
+                                        size: 10
+                                    }
+                                }
                             }
                         }
-                    }
-                });
-            }
-        };
+                    });
+                }
 
-        eventSource.onerror = function(err) {
-            console.error("EventSource failed:", err);
-            // Optionally display an error message to the user
-            newArticleDiv.innerHTML = `<p class="text-danger">Failed to connect to news stream. Please try refreshing the page.</p>`;
-            // Update statisticsTextDiv instead of statisticsDiv
-            statisticsTextDiv.innerHTML = `<p class="text-danger">Failed to load statistics.</p>`;
-        };
+                // Update the recent trends pie chart
+                const recentTrends = stats.recent_trend_analysis;
+                const recentLabels = Object.keys(recentTrends);
+                const recentDataValues = Object.values(recentTrends);
+
+                if (recentTrendsPieChart) {
+                    recentTrendsPieChart.data.labels = recentLabels;
+                    recentTrendsPieChart.data.datasets[0].data = recentDataValues;
+                    recentTrendsPieChart.update();
+                } else {
+                    const ctx = document.getElementById('recentTrendsPieChart').getContext('2d');
+                    recentTrendsPieChart = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: recentLabels,
+                            datasets: [{
+                                data: recentDataValues,
+                                backgroundColor: [
+                                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9900', '#FFCD56', '#4CAF50'
+                                ],
+                                hoverBackgroundColor: [
+                                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9900', '#FFCD56', '#4CAF50'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: true,
+                                    text: `Trends (Last ${stats.last_n} Articles)`
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed !== null) {
+                                                label += context.parsed;
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                },
+                                datalabels: {
+                                    formatter: (value, context) => {
+                                        const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                        const percentage = (value * 100 / sum).toFixed(1) + "%";
+                                        return `${context.chart.data.labels[context.dataIndex]}\n(${value}) ${percentage}`;
+                                    },
+                                    color: '#fff',
+                                    font: {
+                                        weight: 'bold',
+                                        size: 10
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Update Bloom Filter statistics
+                const bfStats = stats.bloom_filter;
+                bloomFilterStatsDiv.innerHTML = `
+                    <p><strong>Total articles processed:</strong> <span class="badge bg-info">${bfStats.total_processed}</span></p>
+                    <p><strong>Unique articles added to filter:</strong> <span class="badge bg-success">${bfStats.unique_added}</span></p>
+                    <p><strong>Redundant articles caught:</strong> <span class="badge bg-warning">${bfStats.redundant_caught}</span></p>
+                    <hr>
+                    <h5>Bloom Filter Configuration</h5>
+                    <dl class="row">
+                        <dt class="col-sm-4">Capacity:</dt>
+                        <dd class="col-sm-8">${bfStats.capacity}</dd>
+                        <dt class="col-sm-4">Error Rate:</dt>
+                        <dd class="col-sm-8">${bfStats.error_rate}</dd>
+                        <dt class="col-sm-4">Number of Bits (m):</dt>
+                        <dd class="col-sm-8">${bfStats.num_bits}</dd>
+                        <dt class="col-sm-4">Number of Hash Functions (k):</dt>
+                        <dd class="col-sm-8">${bfStats.num_hashes}</dd>
+                    </dl>
+                    <p><strong>Bloom Filter current count (items added):</strong> <span class="badge bg-primary">${bfStats.bloom_filter_count}</span></p>
+                    <p><strong>Raw Bit Array:</strong></p>
+                    <textarea class="form-control" rows="5" readonly>${bfStats.bit_array}</textarea>
+                `;
+
+                // Update MinWise Sampled Articles
+                const minwiseSamples = stats.minwise_samples;
+                let minwiseHtml = '';
+                if (Object.keys(minwiseSamples).length > 0) {
+                    for (const category in minwiseSamples) {
+                        minwiseHtml += `
+                            <div class="card mb-2">
+                                <div class="card-header" id="heading${category}">
+                                    <h5 class="mb-0">
+                                        <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#collapse${category}" aria-expanded="true" aria-controls="collapse${category}">
+                                            Category: ${category}
+                                        </button>
+                                    </h5>
+                                </div>
+                                <div id="collapse${category}" class="collapse" aria-labelledby="heading${category}" data-bs-parent="#minwise-samples-accordion">
+                                    <div class="card-body">
+                                        <ul class="list-group">
+                                            ${minwiseSamples[category].map(article => `
+                                                <li class="list-group-item">
+                                                    <strong>Headline:</strong> ${article.headline}<br>
+                                                    <strong>Content:</strong> ${article.content.substring(0, 100)}...
+                                                </li>
+                                            `).join('')}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    minwiseSamplesDiv.innerHTML = `<div class="accordion" id="minwise-samples-accordion">${minwiseHtml}</div>`;
+                } else {
+                    minwiseSamplesDiv.innerHTML = '<p class="text-muted">No MinWise samples available yet.</p>';
+                }
+
+                // Update Flajolet-Martin estimate
+                const fmEstimate = stats.flajolet_martin_estimate;
+                flajoletMartinStatsDiv.innerHTML = `
+                    <p><strong>Estimated Unique Articles:</strong> <span class="badge bg-primary">${fmEstimate}</span></p>
+                `;
+            };
+
+            eventSource.onerror = function(err) {
+                console.error("EventSource failed:", err);
+                // Optionally display an error message to the user
+                newArticleDiv.innerHTML = `<p class="text-danger">Failed to connect to news stream. Please try refreshing the page.</p>`;
+                statisticsTextDiv.innerHTML = `<p class="text-danger">Failed to load statistics.</p>`;
+                bloomFilterStatsDiv.innerHTML = `<p class="text-danger">Failed to load Bloom Filter statistics.</p>`;
+                minwiseSamplesDiv.innerHTML = `<p class="text-danger">Failed to load MinWise samples.</p>`;
+                flajoletMartinStatsDiv.innerHTML = `<p class="text-danger">Failed to load Flajolet-Martin estimate.</p>`;
+            };
+        }
+
+        // Initial connection
+        connectSSE(lastNInput.value);
+
+        // Reconnect SSE when lastNInput changes
+        lastNInput.addEventListener('change', () => {
+            const newLastN = lastNInput.value;
+            if (newLastN && newLastN > 0) {
+                connectSSE(newLastN);
+            } else {
+                alert('Please enter a valid number for X (last N articles).');
+                lastNInput.value = 5; // Reset to default
+                connectSSE(5);
+            }
+        });
     </script>
 </body>
 </html>

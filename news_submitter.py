@@ -13,7 +13,10 @@ def generate_news_article():
         "headline": fake.sentence(),
         "content": fake.paragraph(),
         "category": random.choice(["world", "technology", "sports", "entertainment"]),
-        "datePublished": fake.date_time_this_decade().isoformat()
+        "datePublished": fake.date_time_this_decade().isoformat(),
+        "popularity_score": random.randint(1, 10), # Simulate popularity
+        "engagementLevel": random.choice(["low", "medium", "high"]),
+        "lastUpdated": datetime.datetime.now().isoformat(),
     }
 
 def delete_all_data():

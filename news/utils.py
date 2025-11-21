@@ -7,14 +7,25 @@ class ArticleCategorizer:
         self.categories = {}
 
     def load_data(self):
-        with open(self.data_path, 'r') as file:
-            return json.load(file)
+        # Ensure the data file exists and is not empty
+        try:
+            with open(self.data_path, 'r') as file:
+                content = file.read()
+                if content:
+                    return json.loads(content)
+                else:
+                    return []
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []
 
     def categorize_articles(self):
         articles = self.load_data()
+        self.categories = {} # Reset categories for each categorization run
         for article in articles:
+            # Use the original category from the article
             category = article.get('category')
-            if category:
+            
+            if category: # Only categorize if a category is present
                 if category not in self.categories:
                     self.categories[category] = []
                 self.categories[category].append(article)
@@ -35,10 +46,10 @@ class TrendAnalyzer:
             hash_functions.append(_hash_func)
         return hash_functions
 
-    def add(self, item):
+    def add(self, item, weight=1):
         for i in range(self.depth):
             index = self.hash_functions[i](item) % self.width
-            self.sketch[i][index] += 1
+            self.sketch[i][index] += weight
 
     def estimate(self, item):
         min_count = float('inf')
