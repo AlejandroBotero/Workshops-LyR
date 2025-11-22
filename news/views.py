@@ -14,14 +14,36 @@ import queue
 import os
 import threading # Import threading for lock
 
+import random # new import needed
+
 NEWS_DATA_PATH = 'news_data.json'
 
 # Global SimHash Tendency Analyzer
-simhash_tendency_analyzer_instance = SimHashTendencyAnalyzer(similarity_threshold=3) # Use a similarity threshold
+simhash_tendency_analyzer_instance = SimHashTendencyAnalyzer(similarity_threshold=15) # Use a similarity threshold
 
-# Global variable to store the hash of the last article for similarity comparison
-last_full_article = None
+# Define the similarity threshold for related articles
+RELATED_ARTICLE_SIMILARITY_THRESHOLD = 15 # Example value, can be adjusted
 
+
+def get_related_article(current_article, all_articles):
+    current_category = current_article.get('category')
+    if not current_category:
+        return None
+
+    candidate_articles_in_category = [
+        article for article in all_articles
+        if article.get('category') == current_category and article.get('_id') != current_article.get('_id')
+    ]
+
+    filtered_related_articles = []
+    for candidate_article in candidate_articles_in_category:
+        similarity_distance = compare_news_objects(current_article, candidate_article)
+        if similarity_distance is not None and similarity_distance < RELATED_ARTICLE_SIMILARITY_THRESHOLD:
+            filtered_related_articles.append(candidate_article)
+
+    if filtered_related_articles:
+        return random.choice(filtered_related_articles)
+    return None
 
 def get_categorized_articles():
     categorized_articles = cache.get('categorized_articles')
@@ -73,7 +95,6 @@ class TrendAnalysisView(APIView):
 class SubmitNewsApiView(APIView):
     def post(self, request):
         new_article = request.data
-        print("\n\ngotten new article: \n", new_article)
         
         # Add article to SimHash Tendency Analyzer
         simhash_tendency_analyzer_instance.add_article(new_article)
@@ -94,18 +115,9 @@ class SubmitNewsApiView(APIView):
         return Response({"status": "success", "message": "Article submitted successfully."})
 
 def _event_stream_generator(request):
-    global last_full_article # Declare global to modify it
     while True:
         try:
             current_article = sse_queue.get(timeout=10) # Wait for a new article
-            
-            similarity_distance = "N/A"
-            if last_full_article is not None:
-                similarity_distance = compare_news_objects(last_full_article, current_article)
-            
-            # Store the current article as the last one for the next iteration
-            last_news = last_full_article # Renaming for clarity to frontend
-            last_full_article = current_article
             
             # Recalculate categorized articles and full trend analysis
             categorized_articles = get_categorized_articles()
@@ -128,28 +140,22 @@ def _event_stream_generator(request):
 
             recent_trend_analysis = get_trend_analysis(recent_articles)
             
-            with bloom_filter_lock: # Acquire lock for thread-safe access to counters
-                bf_stats = {
-                    "total_processed": total_articles_processed,
-                    "unique_added": unique_articles_added,
-                    "redundant_caught": redundant_articles_caught,
-                    "bloom_filter_count": bloom_filter_instance.count,
-                    "bit_array": list(bloom_filter_instance.bit_array), # Include the bit array
-                    "capacity": bloom_filter_instance.capacity,
-                    "error_rate": bloom_filter_instance.error_rate,
-                    "num_bits": bloom_filter_instance.num_bits,
-                    "num_hashes": bloom_filter_instance.num_hashes,
-                }
-            
-            minwise_samples = minwise_sampler_instance.get_all_samples()
             
             # Get top tendencies from SimHash Tendency Analyzer
             top_tendencies = simhash_tendency_analyzer_instance.get_top_tendencies()
 
+            # Find a related article
+            related_article = get_related_article(current_article, news_data)
+            
+            related_similarity_distance = "N/A"
+            if related_article is not None:
+                related_similarity_distance = compare_news_objects(current_article, related_article)
+
+
             data = {
                 "new_article": current_article,
-                "last_news": last_news, # Pass the previous full article
-                "similarity": similarity_distance, # Pass the Hamming distance
+                "related_article": related_article, # Pass the related article
+                "related_similarity_distance": related_similarity_distance, # Pass the Hamming distance
                 "statistics": {
                     "total_articles": sum(len(articles) for articles in categorized_articles.values()),
                     "category_counts": {category: len(articles) for category, articles in categorized_articles.items()},

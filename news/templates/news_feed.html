@@ -8,8 +8,17 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <style>
         body {
-            font-size: 0.875rem; /* Slightly smaller base font size */
+            font-size: 0.75rem; /* Reduced base font size */
         }
+        h1 { font-size: 1.8rem; } /* Slightly smaller h1 */
+        h2 { font-size: 1.5rem; } /* Slightly smaller h2 */
+        h3 { font-size: 1.2rem; } /* Slightly smaller h3 */
+        h4 { font-size: 1rem; } /* Slightly smaller h4 */
+        h5 { font-size: 0.9rem; } /* Slightly smaller h5 */
+        h6 { font-size: 0.8rem; } /* Slightly smaller h6 */
+        p { font-size: 0.8rem; } /* Smaller paragraph font size */
+        .card-title { font-size: 1rem; } /* Smaller card titles */
+        .card-text { font-size: 0.8rem; } /* Smaller card text */
         .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
             margin-bottom: 0.5rem; /* Reduce heading margins */
         }
@@ -40,37 +49,31 @@
         <h1 class="text-center mb-4">Real-time News Statistics</h1>
 
         <div class="row">
-            <div class="col-md-6">
-                <div class="row"> <!-- Nested row for new and last article -->
-                    <div class="col-md-12">
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h2>New Article</h2>
-                            </div>
-                            <div class="card-body" id="new-article">
-                                <p class="text-muted">Waiting for new articles...</p>
-                            </div>
-                        </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2>New Article</h2>
                     </div>
-                    <div class="col-md-12">
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h2>Last Article</h2>
-                            </div>
-                            <div class="card-body" id="last-article">
-                                <p class="text-muted">No previous article to display.</p>
-                            </div>
-                        </div>
+                    <div class="card-body" id="new-article">
+                        <p class="text-muted">Waiting for new articles...</p>
+                    </div>
+                </div>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2>Related Article</h2>
+                    </div>
+                    <div class="card-body" id="last-article">
+                        <p class="text-muted">No previous article to display.</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card mb-4">
                     <div class="card-header">
                         <h2>Statistics</h2>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3"> <!-- Moved input field here -->
+                        <div class="mb-3">
                             <label for="lastNInput" class="form-label">Number of recent articles for trend analysis (X):</label>
                             <input type="number" class="form-control" id="lastNInput" value="5" min="1">
                         </div>
@@ -88,17 +91,8 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-
-
-
-
-
-
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <div class="card">
+            <div class="col-md-4">
+                <div class="card mb-4">
                     <div class="card-header">
                         <h2>Top Tendencies (SimHash)</h2>
                     </div>
@@ -146,25 +140,25 @@
                 
                 // Display the new article
                 const currentArticle = data.new_article;
-                const lastNews = data.last_news; // Get last news
-                const similarity = data.similarity; // Get Hamming distance
+                const relatedArticle = data.related_article; // Get related article
 
                 newArticleDiv.innerHTML = `
                     <h3 class="card-title">${currentArticle.headline}</h3>
                     <p class="card-text"><strong>Category:</strong> <span class="badge bg-info text-dark">${currentArticle.category}</span></p>
-                    <p class="card-text"><strong id="similarity-status">SimHash Distance (to last news): ${similarity}</strong></p>
                     <p class="card-text">${currentArticle.content}</p>
                 `;
 
-                // Display the last news
-                if (lastNews) {
+                // Display the related article
+                if (relatedArticle) {
+                    const relatedSimilarity = data.related_similarity_distance;
                     lastArticleDiv.innerHTML = `
-                        <h3 class="card-title">${lastNews.headline}</h3>
-                        <p class="card-text"><strong>Category:</strong> <span class="badge bg-secondary text-dark">${lastNews.category}</span></p>
-                        <p class="card-text">${lastNews.content}</p>
+                        <h3 class="card-title">${relatedArticle.headline}</h3>
+                        <p class="card-text"><strong>Category:</strong> <span class="badge bg-secondary text-dark">${relatedArticle.category}</span></p>
+                        <p class="card-text"><strong id="related-similarity-status">SimHash Distance (to new article): ${relatedSimilarity}</strong></p>
+                        <p class="card-text">${relatedArticle.content}</p>
                     `;
                 } else {
-                    lastArticleDiv.innerHTML = `<p class="text-muted">No previous article to display.</p>`;
+                    lastArticleDiv.innerHTML = `<p class="text-muted">No related article to display.</p>`;
                 }
 
                 // Update the textual statistics
@@ -206,7 +200,7 @@
                             responsive: true,
                             plugins: {
                                 legend: {
-                                    position: 'top',
+                                    display: false, // Hide the legend
                                 },
                                 title: {
                                     display: true,
@@ -272,7 +266,7 @@
                             responsive: true,
                             plugins: {
                                 legend: {
-                                    position: 'top',
+                                    display: false, // Hide the legend
                                 },
                                 title: {
                                     display: true,

@@ -38,7 +38,7 @@ class ArticleCategorizer:
 
 
 class SimHashTendencyAnalyzer:
-    def __init__(self, similarity_threshold=3): # Hamming distance threshold for similarity
+    def __init__(self, similarity_threshold=15): # Hamming distance threshold for similarity
         self.similarity_threshold = similarity_threshold
         # Stores buckets. Each bucket is a list of articles.
         # Key: representative_simhash, Value: list of articles in that bucket
@@ -62,6 +62,10 @@ class SimHashTendencyAnalyzer:
             if distance <= self.similarity_threshold:
                 self.buckets[representative_simhash].append(article)
                 found_bucket = True
+                for litbuk in self.buckets:
+                    for art in self.buckets[litbuk]:
+                        print(art)
+                print(self.buckets)
                 break
         
         if not found_bucket:
