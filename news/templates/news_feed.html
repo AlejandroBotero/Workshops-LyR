@@ -200,8 +200,8 @@
                 console.log('EventSource closed.');
             }
             lastNValueDisplay.textContent = lastNValue;
-            eventSource = new EventSource(`https://hashingworkshoplogica-gjc2bhe2e8fpa3g3.brazilsouth-01.azurewebsites.net/api/stream/?last_n=${lastNValue}`);
-            console.log(`EventSource connected to https://hashingworkshoplogica-gjc2bhe2e8fpa3g3.brazilsouth-01.azurewebsites.net/api/stream/?last_n=${lastNValue}`);
+            eventSource = new EventSource(`https://hashingworkshoplogica-gjc2bhe2e8fpa3g3.brazilsouth-01.azurewebsites.net/news/stream/?last_n=${lastNValue}`);
+            console.log(`EventSource connected to https://hashingworkshoplogica-gjc2bhe2e8fpa3g3.brazilsouth-01.azurewebsites.net/news/stream/?last_n=${lastNValue}`);
 
             eventSource.onmessage = function (event) {
                 if (event.data.startsWith(':heartbeat')) {
