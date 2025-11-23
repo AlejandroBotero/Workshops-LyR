@@ -61,10 +61,6 @@ class SimHashTendencyAnalyzer:
             if distance <= self.similarity_threshold:
                 self.buckets[representative_simhash].append(article)
                 found_bucket = True
-                for litbuk in self.buckets:
-                    for art in self.buckets[litbuk]:
-                        print(art)
-                print(self.buckets)
                 break
         
         if not found_bucket:
