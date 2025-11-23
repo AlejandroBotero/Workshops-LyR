@@ -52,7 +52,7 @@ def submit_article(index, total):
     """
     Generate and submit a single news article to the API.
     """
-    url = "http://127.0.0.1:8000/api/submit/"
+    url = "https://hashingworkshoplogica-gjc2bhe2e8fpa3g3.brazilsouth-01.azurewebsites.net/api/submit/"
     
     print(f"[{index}/{total}] Generating article...")
     article = generate_news_article_llm()

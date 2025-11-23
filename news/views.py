@@ -27,6 +27,13 @@ class IndexView(APIView):
         return render(request, 'news_feed.html')
 
 
+class CreateNewsView(View):
+    """Render the news submission page"""
+    
+    def get(self, request):
+        return render(request, 'create_news.html')
+
+
 class CategorizedArticlesView(APIView):
     """Get all articles grouped by category"""
     

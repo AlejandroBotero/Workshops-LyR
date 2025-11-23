@@ -30,6 +30,11 @@ ALLOWED_HOSTS = ["169.254.129.4", "localhost", "127.0.0.1", ".azurewebsites.net"
 
 CSRF_TRUSTED_ORIGINS = ["https://*.azurewebsites.net"]
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
 
 # Application definition
 
@@ -57,6 +62,7 @@ CACHES = {
 }
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -68,6 +74,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

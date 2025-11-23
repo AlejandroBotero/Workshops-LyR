@@ -21,5 +21,5 @@ from django.urls import path, include
 urlpatterns = [
     # path('', HomepageView.as_view(), name='homepage'),
     path('admin/', admin.site.urls),
-    path('api/', include('news.urls')),
+    path('news/', include('news.urls')),
 ]

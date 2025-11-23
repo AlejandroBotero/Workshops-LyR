@@ -4,3 +4,4 @@ djangorestframework
 requests
 gunicorn
 whitenoise
+django-cors-headers
