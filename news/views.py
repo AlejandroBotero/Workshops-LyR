@@ -5,6 +5,8 @@ Handles HTTP requests and delegates business logic to service modules.
 from django.http import StreamingHttpResponse
 from django.shortcuts import render
 from django.views import View
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -58,6 +60,7 @@ class BucketsView(APIView):
         return Response(buckets)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class SubmitNewsApiView(APIView):
     """Submit a new news article"""
     
