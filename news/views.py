@@ -19,7 +19,7 @@ from .services import (
     CacheService,
 )
 from .sse_handlers import SSEStreamGenerator
-from .sse_utils import sse_queue
+
 
 
 class IndexView(APIView):
