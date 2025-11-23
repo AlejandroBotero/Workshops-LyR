@@ -82,7 +82,6 @@ class SSEEventBuilder:
             full_trend_analysis,
             recent_trend_analysis,
             top_tendencies,
-            top_tendencies,
             last_n
         )
         
