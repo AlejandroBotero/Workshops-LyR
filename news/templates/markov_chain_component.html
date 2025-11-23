@@ -65,26 +65,66 @@
 
             if (!from || !to) return;
 
-            // Calculate arrow path with curve
-            const dx = to.x - from.x;
-            const dy = to.y - from.y;
+            let pathD;
+            let cx, cy;
 
-            // Midpoint
-            const mx = (from.x + to.x) / 2;
-            const my = (from.y + to.y) / 2;
+            if (edge.from === edge.to) {
+                // Self-loop
+                // Calculate direction from center to node to orient the loop outwards
+                const dx = from.x - centerX;
+                const dy = from.y - centerY;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                const nx = dx / len; // Normalized vector
+                const ny = dy / len;
 
-            // Perpendicular vector for control point
-            // Normalize (dx, dy) -> (-dy, dx) is perpendicular
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            const offset = 40; // Curve amount
+                // Loop control points
+                // We want the loop to stick out by 'loopSize'
+                const loopSize = 50;
+                const loopWidth = 30;
 
-            // Control point
-            const cx = mx - (dy / dist) * offset;
-            const cy = my + (dx / dist) * offset;
+                // Perpendicular vector
+                const px = -ny;
+                const py = nx;
+
+                // Control point 1
+                const cp1x = from.x + nx * loopSize + px * loopWidth;
+                const cp1y = from.y + ny * loopSize + py * loopWidth;
+
+                // Control point 2
+                const cp2x = from.x + nx * loopSize - px * loopWidth;
+                const cp2y = from.y + ny * loopSize - py * loopWidth;
+
+                pathD = `M${from.x},${from.y} C${cp1x},${cp1y} ${cp2x},${cp2y} ${from.x},${from.y}`;
+
+                // Label position (approximate tip of the loop)
+                cx = from.x + nx * (loopSize + 10);
+                cy = from.y + ny * (loopSize + 10);
+
+            } else {
+                // Normal edge
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+
+                // Midpoint
+                const mx = (from.x + to.x) / 2;
+                const my = (from.y + to.y) / 2;
+
+                // Perpendicular vector for control point
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const offset = 40; // Curve amount
+
+                if (dist === 0) return; // Should be handled by self-loop check, but safety first
+
+                // Control point
+                cx = mx - (dy / dist) * offset;
+                cy = my + (dx / dist) * offset;
+
+                pathD = `M${from.x},${from.y} Q${cx},${cy} ${to.x},${to.y}`;
+            }
 
             // Create curved path
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', `M${from.x},${from.y} Q${cx},${cy} ${to.x},${to.y}`);
+            path.setAttribute('d', pathD);
             path.setAttribute('stroke', '#999');
             path.setAttribute('stroke-width', Math.max(1, edge.probability * 3));
             path.setAttribute('fill', 'none');
@@ -92,7 +132,7 @@
             path.setAttribute('marker-end', 'url(#arrowhead)');
             svg.appendChild(path);
 
-            // Add probability label (near control point)
+            // Add probability label
             const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             text.setAttribute('x', cx);
             text.setAttribute('y', cy);

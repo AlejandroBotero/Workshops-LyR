@@ -204,7 +204,10 @@ class TendencyAnalysisService:
         if not cls._initialized:
             # Check if buckets are empty to avoid double loading if initialized elsewhere
             if not simhash_tendency_analyzer.buckets:
-                all_articles = News.objects.all()
+                # Use iterator to avoid loading all objects into memory at once
+                # Only fetch fields needed for to_dict (or just what's needed for SimHash if optimized)
+                # SimHash needs: headline, content, category
+                all_articles = News.objects.all().iterator()
                 for article in all_articles:
                     simhash_tendency_analyzer.add_article(article.to_dict())
             cls._initialized = True
