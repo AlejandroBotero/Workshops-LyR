@@ -13,7 +13,6 @@ from .services import (
     RelatedArticleService,
     TendencyAnalysisService,
 )
-from .sse_utils import sse_queue
 from .hasher import compare_news_objects
 from .markov_service import MarkovChainService
 
