@@ -7,6 +7,7 @@ from django.utils import timezone
 from datetime import datetime
 import random
 
+from django.db.models import Count
 from .models import News
 from .utils import ArticleCategorizer, SimHashTendencyAnalyzer
 from .hasher import compare_news_objects
@@ -130,12 +131,11 @@ class TrendAnalysisService:
         analysis = cache.get(cache_key)
         
         if not analysis:
-            all_articles = News.objects.all()
-            category_counts = {}
-            
-            for article in all_articles:
-                category = article.category
-                category_counts[category] = category_counts.get(category, 0) + 1
+        if not analysis:
+            # Use DB aggregation for performance
+            category_counts = dict(
+                News.objects.values_list('category').annotate(count=Count('category'))
+            )
             
             analysis = category_counts
             cache.set(cache_key, analysis, CACHE_TIMEOUT)
@@ -152,13 +152,14 @@ class RelatedArticleService:
     """Service for finding related articles"""
     
     @staticmethod
-    def find_related_article(current_article, all_articles, threshold=RELATED_ARTICLE_SIMILARITY_THRESHOLD):
+    def find_related_article(current_article, limit=50, threshold=RELATED_ARTICLE_SIMILARITY_THRESHOLD):
         """
         Find a related article based on category and similarity.
+        Searches only recent articles in the same category for performance.
         
         Args:
             current_article: Current article dictionary
-            all_articles: List of all article dictionaries
+            limit: Max number of recent articles to check
             threshold: Similarity threshold (Hamming distance)
             
         Returns:
@@ -168,12 +169,13 @@ class RelatedArticleService:
         if not current_category:
             return None
         
-        # Filter articles in the same category
-        candidates = [
-            article for article in all_articles
-            if article.get('category') == current_category 
-            and article.get('_id') != current_article.get('_id')
-        ]
+        # Fetch only recent articles in the same category from DB
+        # Exclude the current article itself
+        candidates_qs = News.objects.filter(category=current_category).exclude(
+            id=current_article.get('_id')
+        ).order_by('-datePublished')[:limit]
+        
+        candidates = [article.to_dict() for article in candidates_qs]
         
         # Find similar articles
         similar_articles = []

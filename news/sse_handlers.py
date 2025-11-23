@@ -51,7 +51,7 @@ class SSEEventBuilder:
         full_trend_analysis = TrendAnalysisService.get_full_trend_analysis()
         
         # Get all articles and recent articles (always fresh from DB)
-        all_articles = ArticleService.get_all_articles_as_dicts()
+        # all_articles = ArticleService.get_all_articles_as_dicts() # REMOVED for performance
         recent_articles = ArticleService.get_recent_articles(limit=last_n)
         
         # Analyze recent trends
@@ -65,8 +65,7 @@ class SSEEventBuilder:
         
         # Find related article
         related_article = RelatedArticleService.find_related_article(
-            current_article, 
-            all_articles
+            current_article
         )
         
         # Calculate similarity distance if related article found
@@ -83,8 +82,8 @@ class SSEEventBuilder:
             full_trend_analysis,
             recent_trend_analysis,
             top_tendencies,
-            last_n,
-            all_articles
+            top_tendencies,
+            last_n
         )
         
         return {
@@ -96,7 +95,7 @@ class SSEEventBuilder:
         }
     
     @staticmethod
-    def _build_statistics(categorized, full_trends, recent_trends, top_tendencies, last_n, all_articles):
+    def _build_statistics(categorized, full_trends, recent_trends, top_tendencies, last_n):
         """Build statistics section of event data"""
         # Verify total count matches database
         db_count = News.objects.count()
