@@ -2,3 +2,5 @@ faker
 django
 djangorestframework
 requests
+gunicorn
+whitenoise
