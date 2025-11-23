@@ -9,7 +9,6 @@ fake = Faker()
 
 def generate_news_article():
     return {
-        "_id": fake.uuid4(),
         "headline": fake.sentence(),
         "content": fake.paragraph(),
         "category": random.choice(["world", "technology", "sports", "entertainment"]),
@@ -19,20 +18,15 @@ def generate_news_article():
         "lastUpdated": datetime.datetime.now().isoformat(),
     }
 
-def delete_all_data():
-    with open("news_data.json", "w") as file:
-        file.write("[]")
-
 def submit_news():
     url = "http://127.0.0.1:8000/api/submit/"
-    delete_all_data()
     for _ in range(100):
         article = generate_news_article()
         try:
             print("before posting")
             response = requests.post(url, json=article)
             print("after posting")
-            if response.status_code == 200:
+            if response.status_code in [200, 201]:  # Accept both 200 and 201 as success
                 print(f"Successfully submitted article: {article['headline']}")
             else:
                 print(f"Failed to submit article. Status code: {response.status_code}")
@@ -46,3 +40,4 @@ def submit_news():
 if __name__ == '__main__':
     print("started process")
     submit_news()
+

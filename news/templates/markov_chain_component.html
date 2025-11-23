@@ -1,0 +1,157 @@
+<!-- Markov Chain Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h2>Category Transitions (Markov Chain)</h2>
+    </div>
+    <div class="card-body">
+        <div id="markov-graph-container"
+            style="width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 5px; position: relative; overflow: hidden; background: #f8f9fa;">
+            <svg id="markov-graph-svg" width="100%" height="100%"></svg>
+        </div>
+        <div id="markov-stats" class="mt-2">
+            <p class="text-muted small">Waiting for Markov chain data...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to render Markov chain graph
+    function renderMarkovGraph(markovGraph) {
+        const svg = document.getElementById('markov-graph-svg');
+        const container = document.getElementById('markov-graph-container');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        // Clear previous content
+        svg.innerHTML = '';
+
+        const nodes = markovGraph.nodes;
+        const edges = markovGraph.edges;
+
+        if (nodes.length === 0) {
+            return;
+        }
+
+        // Position nodes in a circle
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const radius = Math.min(width, height) / 3;
+
+        const nodePositions = {};
+        const colors = {
+            'technology': '#36A2EB',
+            'sports': '#FF6384',
+            'world': '#4BC0C0',
+            'entertainment': '#FFCE56',
+            'health': '#4CAF50',
+            'business': '#9966FF',
+            'politics': '#FF9900'
+        };
+
+        nodes.forEach((node, i) => {
+            const angle = (i / nodes.length) * 2 * Math.PI - Math.PI / 2;
+            nodePositions[node.id] = {
+                x: centerX + radius * Math.cos(angle),
+                y: centerY + radius * Math.sin(angle),
+                label: node.label,
+                count: node.count
+            };
+        });
+
+        // Draw edges (arrows)
+        edges.forEach(edge => {
+            const from = nodePositions[edge.from];
+            const to = nodePositions[edge.to];
+
+            if (!from || !to) return;
+
+            // Calculate arrow path with curve
+            const dx = to.x - from.x;
+            const dy = to.y - from.y;
+
+            // Midpoint
+            const mx = (from.x + to.x) / 2;
+            const my = (from.y + to.y) / 2;
+
+            // Perpendicular vector for control point
+            // Normalize (dx, dy) -> (-dy, dx) is perpendicular
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const offset = 40; // Curve amount
+
+            // Control point
+            const cx = mx - (dy / dist) * offset;
+            const cy = my + (dx / dist) * offset;
+
+            // Create curved path
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', `M${from.x},${from.y} Q${cx},${cy} ${to.x},${to.y}`);
+            path.setAttribute('stroke', '#999');
+            path.setAttribute('stroke-width', Math.max(1, edge.probability * 3));
+            path.setAttribute('fill', 'none');
+            path.setAttribute('opacity', '0.6');
+            path.setAttribute('marker-end', 'url(#arrowhead)');
+            svg.appendChild(path);
+
+            // Add probability label (near control point)
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', cx);
+            text.setAttribute('y', cy);
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('font-size', '10');
+            text.setAttribute('fill', '#666');
+            text.textContent = (edge.probability * 100).toFixed(0) + '%';
+            svg.appendChild(text);
+        });
+
+        // Define arrowhead marker
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+        marker.setAttribute('id', 'arrowhead');
+        marker.setAttribute('markerWidth', '10');
+        marker.setAttribute('markerHeight', '10');
+        marker.setAttribute('refX', '8');
+        marker.setAttribute('refY', '3');
+        marker.setAttribute('orient', 'auto');
+        const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        polygon.setAttribute('points', '0 0, 10 3, 0 6');
+        polygon.setAttribute('fill', '#999');
+        marker.appendChild(polygon);
+        defs.appendChild(marker);
+        svg.insertBefore(defs, svg.firstChild);
+
+        // Draw nodes
+        Object.keys(nodePositions).forEach(nodeId => {
+            const pos = nodePositions[nodeId];
+
+            // Node circle
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', pos.x);
+            circle.setAttribute('cy', pos.y);
+            circle.setAttribute('r', Math.min(30, 15 + Math.sqrt(pos.count) * 2));
+            circle.setAttribute('fill', colors[nodeId] || '#999');
+            circle.setAttribute('stroke', '#fff');
+            circle.setAttribute('stroke-width', '2');
+            svg.appendChild(circle);
+
+            // Node label
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', pos.x);
+            text.setAttribute('y', pos.y + 5);
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('font-size', '11');
+            text.setAttribute('font-weight', 'bold');
+            text.setAttribute('fill', '#fff');
+            text.textContent = pos.label;
+            svg.appendChild(text);
+        });
+
+        // Update stats
+        const statsDiv = document.getElementById('markov-stats');
+        const totalTransitions = edges.length;
+        statsDiv.innerHTML = `
+        <p class="small mb-0"><strong>Nodes:</strong> ${nodes.length} categories</p>
+        <p class="small mb-0"><strong>Transitions:</strong> ${totalTransitions} paths</p>
+        <p class="small text-muted mb-0">Arrow thickness = transition probability</p>
+    `;
+    }
+</script>

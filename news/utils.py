@@ -6,33 +6,32 @@ import random # Added for random sample headline selection
 from news.hasher import simhash_news_object, get_hamming_distance # Import necessary SimHash functions
 
 class ArticleCategorizer:
-    def __init__(self, data_path):
-        self.data_path = data_path
+    def __init__(self, data_path=None):
+        # data_path is now optional and ignored, kept for backward compatibility
         self.categories = {}
 
     def load_data(self):
-        # Ensure the data file exists and is not empty
-        try:
-            with open(self.data_path, 'r') as file:
-                content = file.read()
-                if content:
-                    return json.loads(content)
-                else:
-                    return []
-        except (FileNotFoundError, json.JSONDecodeError):
-            return []
+        """Load data from Django ORM instead of JSON file"""
+        from news.models import News
+        articles = News.objects.all()
+        return [article.to_dict() for article in articles]
 
     def categorize_articles(self):
-        articles = self.load_data()
+        """Categorize articles from the database"""
+        from news.models import News
         self.categories = {} # Reset categories for each categorization run
+        
+        # Use Django ORM to group by category
+        articles = News.objects.all()
+        
         for article in articles:
-            # Use the original category from the article
-            category = article.get('category')
+            category = article.category
             
             if category: # Only categorize if a category is present
                 if category not in self.categories:
                     self.categories[category] = []
-                self.categories[category].append(article)
+                self.categories[category].append(article.to_dict())
+        
         return self.categories
 
 
@@ -72,11 +71,11 @@ class SimHashTendencyAnalyzer:
             # If no suitable bucket found, create a new one with this article's simhash as representative
             self.buckets[article_simhash].append(article)
 
-    def get_top_tendencies(self, num_tendencies=3):
+    def get_top_tendencies(self, num_tendencies=5):
         """
         Identifies and returns the top N tendencies (topics) based on bucket size.
         A tendency is represented by its most frequent category and a sample headline.
-        Returns a list of dictionaries, e.g., [{"topic": "Technology", "count": 10, "sample_headline": "..."}].
+        Returns a list of dictionaries, e.g., [{"topic": "Technology", "count": 10, "sample_headline": "...", "articles": [...]}].
         """
         # Sort buckets by size (number of articles) in descending order
         sorted_buckets = sorted(self.buckets.items(), key=lambda item: len(item[1]), reverse=True)
@@ -107,10 +106,14 @@ class SimHashTendencyAnalyzer:
                 sample_article = random.choice(articles_of_most_frequent_category)
                 sample_headline = sample_article.get('headline', 'No Headline')
             
+            # Get list of headlines for the toggle view (limit to 10)
+            article_headlines = [a.get('headline', 'No Headline') for a in articles_in_bucket[:10]]
+
             top_tendencies.append({
                 "topic": most_frequent_category,
                 "count": len(articles_in_bucket),
-                "sample_headline": sample_headline
+                "sample_headline": sample_headline,
+                "articles": article_headlines
             })
             
             if len(top_tendencies) >= num_tendencies:

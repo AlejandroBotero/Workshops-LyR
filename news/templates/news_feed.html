@@ -1,49 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Real-time News Statistics</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <style>
         body {
-            font-size: 0.75rem; /* Reduced base font size */
+            font-size: 0.75rem;
+            /* Reduced base font size */
         }
-        h1 { font-size: 1.8rem; } /* Slightly smaller h1 */
-        h2 { font-size: 1.5rem; } /* Slightly smaller h2 */
-        h3 { font-size: 1.2rem; } /* Slightly smaller h3 */
-        h4 { font-size: 1rem; } /* Slightly smaller h4 */
-        h5 { font-size: 0.9rem; } /* Slightly smaller h5 */
-        h6 { font-size: 0.8rem; } /* Slightly smaller h6 */
-        p { font-size: 0.8rem; } /* Smaller paragraph font size */
-        .card-title { font-size: 1rem; } /* Smaller card titles */
-        .card-text { font-size: 0.8rem; } /* Smaller card text */
-        .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
-            margin-bottom: 0.5rem; /* Reduce heading margins */
+
+        h1 {
+            font-size: 1.8rem;
         }
+
+        /* Slightly smaller h1 */
+        h2 {
+            font-size: 1.5rem;
+        }
+
+        /* Slightly smaller h2 */
+        h3 {
+            font-size: 1.2rem;
+        }
+
+        /* Slightly smaller h3 */
+        h4 {
+            font-size: 1rem;
+        }
+
+        /* Slightly smaller h4 */
+        h5 {
+            font-size: 0.9rem;
+        }
+
+        /* Slightly smaller h5 */
+        h6 {
+            font-size: 0.8rem;
+        }
+
+        /* Slightly smaller h6 */
+        p {
+            font-size: 0.8rem;
+        }
+
+        /* Smaller paragraph font size */
+        .card-title {
+            font-size: 1rem;
+        }
+
+        /* Smaller card titles */
+        .card-text {
+            font-size: 0.8rem;
+        }
+
+        /* Smaller card text */
+        .h1,
+        .h2,
+        .h3,
+        .h4,
+        .h5,
+        .h6,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            margin-bottom: 0.5rem;
+            /* Reduce heading margins */
+        }
+
         .card-header {
-            padding: 0.5rem 1rem; /* Smaller card headers */
+            padding: 0.5rem 1rem;
+            /* Smaller card headers */
         }
+
         .card-body {
-            padding: 0.75rem; /* Smaller card body padding */
+            padding: 0.75rem;
+            /* Smaller card body padding */
         }
+
         .list-group-item {
-            padding: 0.5rem 1rem; /* Smaller list items */
+            padding: 0.5rem 1rem;
+            /* Smaller list items */
         }
+
         /* Container for graphs to control their size */
         .chart-container {
             position: relative;
             margin: auto;
-            height: 250px; /* Fixed height for smaller graphs */
-            width: 250px;  /* Fixed width for smaller graphs */
+            height: 250px;
+            /* Fixed height for smaller graphs */
+            width: 250px;
+            /* Fixed width for smaller graphs */
         }
     </style>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <!-- Chart.js Datalabels Plugin CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
 </head>
+
 <body>
     <div class="container my-4">
         <h1 class="text-center mb-4">Real-time News Statistics</h1>
@@ -74,7 +137,8 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label for="lastNInput" class="form-label">Number of recent articles for trend analysis (X):</label>
+                            <label for="lastNInput" class="form-label">Number of recent articles for trend analysis
+                                (X):</label>
                             <input type="number" class="form-control" id="lastNInput" value="5" min="1">
                         </div>
                         <div id="statistics-text">
@@ -102,10 +166,19 @@
                 </div>
             </div>
         </div>
+
+        <!-- Markov Chain Section (Full Width) -->
+        <div class="row mt-4">
+            <div class="col-12">
+                {% include 'markov_chain_component.html' %}
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap JS Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
     <script>
         // Register the datalabels plugin globally
         Chart.register(ChartDataLabels);
@@ -130,14 +203,14 @@
             eventSource = new EventSource(`/api/stream/?last_n=${lastNValue}`);
             console.log(`EventSource connected to /api/stream/?last_n=${lastNValue}`);
 
-            eventSource.onmessage = function(event) {
+            eventSource.onmessage = function (event) {
                 if (event.data.startsWith(':heartbeat')) {
                     console.log('Heartbeat received');
                     return;
                 }
-                
+
                 const data = JSON.parse(event.data);
-                
+
                 // Display the new article
                 const currentArticle = data.new_article;
                 const relatedArticle = data.related_article; // Get related article
@@ -170,7 +243,7 @@
                         ${Object.entries(stats.full_trend_analysis).map(([category, count]) => `<li class="list-group-item d-flex justify-content-between align-items-center">${category}: <span class="badge bg-success">${count}</span></li>`).join('')}
                     </ul>
                 `;
-                
+
                 // Update the category pie chart
                 const categoryCounts = stats.category_counts;
                 const categoryLabels = Object.keys(categoryCounts);
@@ -208,7 +281,7 @@
                                 },
                                 tooltip: {
                                     callbacks: {
-                                        label: function(context) {
+                                        label: function (context) {
                                             let label = context.label || '';
                                             if (label) {
                                                 label += ': ';
@@ -274,7 +347,7 @@
                                 },
                                 tooltip: {
                                     callbacks: {
-                                        label: function(context) {
+                                        label: function (context) {
                                             let label = context.label || '';
                                             if (label) {
                                                 label += ': ';
@@ -303,22 +376,35 @@
                     });
                 }
 
-
-
-
-
-
-
                 // Update Top Tendencies
                 const topTendencies = stats.top_tendencies;
                 let tendenciesHtml = '';
                 if (topTendencies.length > 0) {
                     tendenciesHtml = `<ul class="list-group">`;
-                    topTendencies.forEach(tendency => {
+                    topTendencies.forEach((tendency, index) => {
+                        const collapseId = `tendency-collapse-${index}`;
+                        const articlesList = tendency.articles ? tendency.articles.map(headline => `<li>${headline}</li>`).join('') : '<li>No articles available</li>';
+
                         tendenciesHtml += `
                             <li class="list-group-item">
-                                <strong>Topic:</strong> ${tendency.topic} <span class="badge bg-info">${tendency.count} articles</span><br>
-                                <strong>Sample Headline:</strong> ${tendency.sample_headline}
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Topic:</strong> ${tendency.topic} <span class="badge bg-info">${tendency.count} articles</span>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
+                                        Show Articles
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <strong>Sample Headline:</strong> ${tendency.sample_headline}
+                                </div>
+                                <div class="collapse mt-2" id="${collapseId}">
+                                    <div class="card card-body bg-light">
+                                        <ul class="small mb-0 ps-3">
+                                            ${articlesList}
+                                        </ul>
+                                    </div>
+                                </div>
                             </li>
                         `;
                     });
@@ -327,16 +413,24 @@
                 } else {
                     topTendenciesDiv.innerHTML = '<p class="text-muted">No top tendencies available yet.</p>';
                 }
+
+                // Update Markov Chain Graph
+                const markovGraph = data.markov_graph;
+                if (markovGraph && markovGraph.nodes && markovGraph.nodes.length > 0) {
+                    renderMarkovGraph(markovGraph);
+                } else {
+                    const statsEl = document.getElementById('markov-stats');
+                    if (statsEl) {
+                        statsEl.innerHTML = '<p class="text-muted small">Not enough data for Markov chain (need at least 2 articles).</p>';
+                    }
+                }
             };
 
-            eventSource.onerror = function(err) {
+            eventSource.onerror = function (err) {
                 console.error("EventSource failed:", err);
                 // Optionally display an error message to the user
                 newArticleDiv.innerHTML = `<p class="text-danger">Failed to connect to news stream. Please run the news_submitter.</p>`;
                 statisticsTextDiv.innerHTML = `<p class="text-danger">Failed to load statistics.</p>`;
-                bloomFilterStatsDiv.innerHTML = `<p class="text-danger">Failed to load Bloom Filter statistics.</p>`;
-                minwiseSamplesDiv.innerHTML = `<p class="text-danger">Failed to load MinWise samples.</p>`;
-                flajoletMartinStatsDiv.innerHTML = `<p class="text-danger">Failed to load Flajolet-Martin estimate.</p>`;
             };
         }
 
@@ -356,4 +450,5 @@
         });
     </script>
 </body>
+
 </html>

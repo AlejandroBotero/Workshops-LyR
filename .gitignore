@@ -14,4 +14,3 @@ venv/
 db.sqlite3 # Assuming this is a local development database
 news_data.json
 GideWorkshop.json
-ollama_submitter.py
