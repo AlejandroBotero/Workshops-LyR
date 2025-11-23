@@ -19,7 +19,7 @@ from .services import (
     CacheService,
 )
 from .sse_handlers import SSEStreamGenerator
-
+from .sse_utils import sse_channel
 
 
 class IndexView(APIView):
@@ -77,8 +77,6 @@ class SubmitNewsApiView(APIView):
             
             # Invalidate caches
             CacheService.invalidate_all()
-            
-            from .sse_utils import sse_channel
             
             # Queue for SSE broadcast
             sse_channel.publish(article_dict)

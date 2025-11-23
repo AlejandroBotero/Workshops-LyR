@@ -1,9 +1,13 @@
+'''
+Server-Sent Events (SSE) utility module implementing a simple Pub/Sub channel.
+'''
 import queue
 
 class SSEChannel:
+    """A simple pub/sub channel for broadcasting messages to multiple SSE clients.
+    Each client gets its own queue when it subscribes via ``listen()``.
     """
-    A simple pub/sub channel for broadcasting messages to multiple SSE clients.
-    """
+
     def __init__(self):
         self.listeners = []
 
@@ -19,16 +23,15 @@ class SSEChannel:
             self.listeners.remove(q)
 
     def publish(self, message):
-        """Broadcast a message to all active listeners."""
-        # Iterate backwards to safely remove if needed (though list.remove handles it)
-        # We use a copy of the list to avoid modification during iteration issues
+        """Broadcast a message to all active listeners.
+        If a listener's queue raises an exception (e.g., full), it is removed.
+        """
         for q in list(self.listeners):
             try:
                 q.put_nowait(message)
             except Exception as e:
-                # If a queue is dead or full, we might want to remove it
                 print(f"Error publishing to queue: {e}")
                 self.unlisten(q)
 
-# Global channel instance
+# Global channel instance used by the app
 sse_channel = SSEChannel()

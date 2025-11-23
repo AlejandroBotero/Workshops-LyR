@@ -1,5 +1,5 @@
 """
-Server-Sent Events (SSE) handlers for real-time news updates.
+Server-Sent Events (SSE) handlers for real‑time news updates.
 """
 import json
 import time
@@ -15,75 +15,50 @@ from .services import (
 )
 from .hasher import compare_news_objects
 from .markov_service import MarkovChainService
+from .sse_utils import sse_channel
 
 
 class SSEEventBuilder:
-    """Builds SSE event data payloads"""
-    
+    """Builds the payload for an SSE event.
+
+    All data is freshly fetched from the database to guarantee consistency.
+    """
+
     @staticmethod
     def build_article_event(current_article, last_n=50):
-        """
-        Build a complete event payload for a new article.
-        Ensures all data is fetched fresh from the database.
-        
+        """Create a complete event payload for a new article.
+
         Args:
-            current_article: The new article dictionary
-            last_n: Number of recent articles to analyze
-            
-        Returns:
-            dict: Complete event data with database-verified information
+            current_article (dict): The article dict (may be stale).
+            last_n (int): Number of recent articles to analyse.
         """
-        # Verify the article exists in the database and get fresh data
+        # Ensure we have the latest version from the DB
         article_id = current_article.get('_id')
         try:
-            # Fetch the article from database to ensure it exists
             db_article = News.objects.get(id=article_id)
-            # Use the fresh database version
             current_article = db_article.to_dict()
         except (News.DoesNotExist, ValueError, TypeError):
-            # If article not found in DB, use the queued version
-            # This shouldn't happen in normal flow but handles edge cases
             pass
-        
-        # Get categorized articles and trends (fresh from DB after cache invalidation)
+
         categorized_articles = CategorizationService.get_categorized_articles()
         full_trend_analysis = TrendAnalysisService.get_full_trend_analysis()
-        
-        # Get all articles and recent articles (always fresh from DB)
-        # all_articles = ArticleService.get_all_articles_as_dicts() # REMOVED for performance
         recent_articles = ArticleService.get_recent_articles(limit=last_n)
-        
-        # Analyze recent trends
         recent_trend_analysis = TrendAnalysisService.analyze_trends(recent_articles)
-        
-        # Get top tendencies
         top_tendencies = TendencyAnalysisService.get_top_tendencies()
-        
-        # Get Markov chain graph data
         markov_graph = MarkovChainService.get_markov_graph_data()
-        
-        # Find related article
-        related_article = RelatedArticleService.find_related_article(
-            current_article
-        )
-        
-        # Calculate similarity distance if related article found
+        related_article = RelatedArticleService.find_related_article(current_article)
         related_similarity_distance = "N/A"
         if related_article is not None:
-            related_similarity_distance = compare_news_objects(
-                current_article, 
-                related_article
-            )
-        
-        # Build statistics
+            related_similarity_distance = compare_news_objects(current_article, related_article)
+
         statistics = SSEEventBuilder._build_statistics(
             categorized_articles,
             full_trend_analysis,
             recent_trend_analysis,
             top_tendencies,
-            last_n
+            last_n,
         )
-        
+
         return {
             "new_article": current_article,
             "related_article": related_article,
@@ -91,20 +66,15 @@ class SSEEventBuilder:
             "statistics": statistics,
             "markov_graph": markov_graph,
         }
-    
+
     @staticmethod
     def _build_statistics(categorized, full_trends, recent_trends, top_tendencies, last_n):
-        """Build statistics section of event data"""
-        # Verify total count matches database
+        """Collect statistics for the event payload."""
         db_count = News.objects.count()
-        
         return {
-            "total_articles": db_count,  # Use actual DB count
-            "total_articles_cached": sum(len(articles) for articles in categorized.values()),
-            "category_counts": {
-                category: len(articles) 
-                for category, articles in categorized.items()
-            },
+            "total_articles": db_count,
+            "total_articles_cached": sum(len(arts) for arts in categorized.values()),
+            "category_counts": {cat: len(arts) for cat, arts in categorized.items()},
             "full_trend_analysis": full_trends,
             "recent_trend_analysis": recent_trends,
             "last_n": last_n,
@@ -113,73 +83,70 @@ class SSEEventBuilder:
 
 
 class SSEStreamGenerator:
-    """Generates SSE stream for real-time updates"""
-    
+    """Generates an SSE stream for real‑time updates."""
+
     HEARTBEAT_TIMEOUT = 10  # seconds
     SLEEP_INTERVAL = 1  # seconds
-    
+
     @staticmethod
     def generate(request):
-        """
-        Generate SSE event stream.
-        Ensures all data sent matches what's in the database.
-        
-        Args:
-            request: HTTP request object
-            
-        Yields:
-            str: SSE formatted events
+        """Yield SSE‑formatted events.
+
+        The generator first sends an initial payload (or a placeholder if the DB is empty),
+        then subscribes the client to the global ``sse_channel`` and streams new articles.
         """
         last_n = SSEStreamGenerator._parse_last_n(request)
-        
-        # Send initial data (latest article) if available
+
+        # ---- Initial payload -------------------------------------------------
         try:
-            latest_article = News.objects.first()
+            latest_article = News.objects.order_by('-datePublished').first()
             if latest_article:
                 event_data = SSEEventBuilder.build_article_event(latest_article.to_dict(), last_n)
                 yield f"data: {json.dumps(event_data)}\n\n"
+            else:
+                # No articles yet – send a friendly placeholder
+                yield f"data: {json.dumps({'message': 'No articles yet'})}\n\n"
         except Exception as e:
-            # Log error but continue to stream loop
+            # Log the problem and still keep the stream alive
             print(f"Error sending initial data: {e}")
+            import traceback
+            traceback.print_exc()
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
-        # Subscribe to the channel
-        from .sse_utils import sse_channel
+        # ---- Subscribe the client -------------------------------------------
         client_queue = sse_channel.listen()
-        
         try:
             while True:
                 try:
-                    # Wait for new article from queue
+                    # Wait for a new article (or timeout for heartbeat)
                     current_article = client_queue.get(timeout=SSEStreamGenerator.HEARTBEAT_TIMEOUT)
-                    
-                    # Build event data (this fetches fresh data from DB)
                     event_data = SSEEventBuilder.build_article_event(current_article, last_n)
-                    
-                    # Yield SSE formatted data
                     yield f"data: {json.dumps(event_data)}\n\n"
-                    
                 except queue.Empty:
-                    # Send heartbeat to keep connection alive
+                    # Heartbeat keeps the connection alive for proxies/load‑balancers
                     yield ":heartbeat\n\n"
                 except Exception as e:
-                    # Log error but keep stream alive
-                    error_data = {
-                        "error": "Failed to build event",
-                        "message": str(e)
-                    }
-                    yield f"data: {json.dumps(error_data)}\n\n"
-                
+                    print(f"Error in stream loop: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    error_payload = {"error": "Failed to build event", "message": str(e)}
+                    yield f"data: {json.dumps(error_payload)}\n\n"
                 time.sleep(SSEStreamGenerator.SLEEP_INTERVAL)
+        except GeneratorExit:
+            # Normal client disconnect (e.g., browser navigation)
+            print("Client disconnected (GeneratorExit)")
+        except Exception as e:
+            print(f"Unexpected stream error: {e}")
+            import traceback
+            traceback.print_exc()
         finally:
-            # Clean up listener when client disconnects
             sse_channel.unlisten(client_queue)
             print("Client disconnected, listener removed.")
-    
+
     @staticmethod
     def _parse_last_n(request):
-        """Parse last_n parameter from request"""
-        last_n_str = request.GET.get('last_n', '50')
+        """Extract ``last_n`` query param, defaulting to 50."""
         try:
-            return int(last_n_str)
+            return int(request.GET.get('last_n', '50'))
         except ValueError:
-            return 50  # Default value
+            return 50
