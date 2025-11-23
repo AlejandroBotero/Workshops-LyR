@@ -131,8 +131,6 @@ class TrendAnalysisService:
         analysis = cache.get(cache_key)
         
         if not analysis:
-        if not analysis:
-            # Use DB aggregation for performance
             category_counts = dict(
                 News.objects.values_list('category').annotate(count=Count('category'))
             )
