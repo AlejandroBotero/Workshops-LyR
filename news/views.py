@@ -78,8 +78,10 @@ class SubmitNewsApiView(APIView):
             # Invalidate caches
             CacheService.invalidate_all()
             
+            from .sse_utils import sse_channel
+            
             # Queue for SSE broadcast
-            sse_queue.put(article_dict)
+            sse_channel.publish(article_dict)
             
             return Response({
                 "status": "success",

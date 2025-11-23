@@ -143,29 +143,38 @@ class SSEStreamGenerator:
             # Log error but continue to stream loop
             print(f"Error sending initial data: {e}")
 
-        while True:
-            try:
-                # Wait for new article from queue
-                current_article = sse_queue.get(timeout=SSEStreamGenerator.HEARTBEAT_TIMEOUT)
+        # Subscribe to the channel
+        from .sse_utils import sse_channel
+        client_queue = sse_channel.listen()
+        
+        try:
+            while True:
+                try:
+                    # Wait for new article from queue
+                    current_article = client_queue.get(timeout=SSEStreamGenerator.HEARTBEAT_TIMEOUT)
+                    
+                    # Build event data (this fetches fresh data from DB)
+                    event_data = SSEEventBuilder.build_article_event(current_article, last_n)
+                    
+                    # Yield SSE formatted data
+                    yield f"data: {json.dumps(event_data)}\n\n"
+                    
+                except queue.Empty:
+                    # Send heartbeat to keep connection alive
+                    yield ":heartbeat\n\n"
+                except Exception as e:
+                    # Log error but keep stream alive
+                    error_data = {
+                        "error": "Failed to build event",
+                        "message": str(e)
+                    }
+                    yield f"data: {json.dumps(error_data)}\n\n"
                 
-                # Build event data (this fetches fresh data from DB)
-                event_data = SSEEventBuilder.build_article_event(current_article, last_n)
-                
-                # Yield SSE formatted data
-                yield f"data: {json.dumps(event_data)}\n\n"
-                
-            except queue.Empty:
-                # Send heartbeat to keep connection alive
-                yield ":heartbeat\n\n"
-            except Exception as e:
-                # Log error but keep stream alive
-                error_data = {
-                    "error": "Failed to build event",
-                    "message": str(e)
-                }
-                yield f"data: {json.dumps(error_data)}\n\n"
-            
-            time.sleep(SSEStreamGenerator.SLEEP_INTERVAL)
+                time.sleep(SSEStreamGenerator.SLEEP_INTERVAL)
+        finally:
+            # Clean up listener when client disconnects
+            sse_channel.unlisten(client_queue)
+            print("Client disconnected, listener removed.")
     
     @staticmethod
     def _parse_last_n(request):
