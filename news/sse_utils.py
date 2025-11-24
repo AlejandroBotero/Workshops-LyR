@@ -1,7 +1,12 @@
 '''
 Server-Sent Events (SSE) utility module implementing a simple Pub/Sub channel.
 '''
-import queue
+try:
+    from gevent import queue
+    GEVENT_AVAILABLE = True
+except ImportError:
+    import queue
+    GEVENT_AVAILABLE = False
 
 class SSEChannel:
     """A simple pub/sub channel for broadcasting messages to multiple SSE clients.

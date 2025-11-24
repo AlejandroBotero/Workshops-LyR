@@ -3,7 +3,15 @@ Server-Sent Events (SSE) handlers for real‑time news updates.
 """
 import json
 import time
-import queue
+
+try:
+    from gevent import queue
+    from gevent import sleep as gevent_sleep
+    GEVENT_AVAILABLE = True
+except ImportError:
+    import queue
+    GEVENT_AVAILABLE = False
+    gevent_sleep = None
 
 from .models import News
 from .services import (
@@ -131,7 +139,12 @@ class SSEStreamGenerator:
                     traceback.print_exc()
                     error_payload = {"error": "Failed to build event", "message": str(e)}
                     yield f"data: {json.dumps(error_payload)}\n\n"
-                time.sleep(SSEStreamGenerator.SLEEP_INTERVAL)
+                
+                # Use gevent.sleep if available (non-blocking), otherwise time.sleep
+                if GEVENT_AVAILABLE:
+                    gevent_sleep(SSEStreamGenerator.SLEEP_INTERVAL)
+                else:
+                    time.sleep(SSEStreamGenerator.SLEEP_INTERVAL)
         except GeneratorExit:
             # Normal client disconnect (e.g., browser navigation)
             print("Client disconnected (GeneratorExit)")
