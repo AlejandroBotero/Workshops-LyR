@@ -3,5 +3,7 @@ django
 djangorestframework
 requests
 gunicorn
+gevent
+greenlet
 whitenoise
 django-cors-headers

@@ -1,0 +1,25 @@
+# Optional: Enhanced requirements.txt with Redis support for production
+# Uncomment these if you want to implement Redis-based Pub/Sub for SSE
+
+# Core dependencies (already added)
+faker
+django
+djangorestframework
+requests
+gunicorn
+gevent
+greenlet
+whitenoise
+django-cors-headers
+
+# Optional: Redis support for cross-worker SSE messaging
+# redis>=4.5.0
+# django-redis>=5.2.0
+
+# Optional: Better async database support
+# psycopg2-binary>=2.9.0  # For PostgreSQL
+# psycopg2-gevent>=0.1.0  # Gevent-compatible PostgreSQL adapter
+
+# Optional: Monitoring and debugging
+# gunicorn[gevent]>=21.0.0  # Includes gevent extras
+# eventlet>=0.33.0  # Alternative to gevent (choose one)
