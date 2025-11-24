@@ -9,6 +9,13 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/wsgi/
 
 import os
 
+# Monkey patch for gevent if available
+try:
+    from gevent import monkey
+    monkey.patch_all()
+except ImportError:
+    pass
+
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'news_api.settings')
