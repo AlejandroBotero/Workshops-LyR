@@ -1,0 +1,9 @@
+<step title="Incoming Request" date="2025-11-23T16:10:11.465" instance="4674be" url="/api/deployments/latest?deployer=OneDeploy&amp;time=2025-11-23_16-09-55Z" method="GET" type="request" pid="851,1,16" Host="hashingworkshoplogica-gjc2bhe2e8fpa3g3.scm.brazilsouth-01.azurewebsites.net" User-Agent="GITHUBACTIONS_DeployWebAppToAzure_5e95d6022cf6a5888ffee81f589163d620e6495c5eb196937077d69850f0d7ef" Authorization="Bea..." Content-Type="application/json; charset=utf-8" Cookie="ARRAffinity=4674be82b396abaf83d02ae5cb9797e3302ed577226c6d832720658f6837fffe;Path=/;HttpOnly;Secure;Domain=hashingworkshoplogica-gjc2bhe2e8fpa3g3.scm.brazilsouth-01.azurewebsites.net; ARRAffinitySameSite=4674be82b396abaf83d02ae5cb9797e3302ed577226c6d832720658f6837fffe;Path=/;HttpOnly;SameSite=None;Secure;Domain=hashingworkshoplogica-gjc2bhe2e8fpa3g3.scm.brazilsouth-01.azurewebsites.net" Content-Length="0" X-ARR-LOG-ID="46a31922-7664-4ec2-9f36-a5ba0e719f75" CLIENT-IP="20.55.126.243:19472" X-SITE-DEPLOYMENT-ID="HashingWorkshopLogica" WAS-DEFAULT-HOSTNAME="hashingworkshoplogica-gjc2bhe2e8fpa3g3.scm.brazilsouth-01.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/deployments/latest?deployer=OneDeploy&amp;time=2025-11-23_16-09-55Z" X-Client-IP="20.55.126.243" X-Client-Port="19472" >
+  <step title="Cleanup Xml Logs" date="2025-11-23T16:10:11.484" /><!-- duration: 40ms -->
+  <step title="DeploymentService.GetResult" date="2025-11-23T16:10:11.756" >
+    <step title="DeploymentService.GetLatestDeployment" date="2025-11-23T16:10:11.766" >
+      <step title="DeploymentManager.GetResults" date="2025-11-23T16:10:11.794" /><!-- duration: 605ms -->
+    </step><!-- duration: 661ms -->
+  </step><!-- duration: 694ms -->
+  <step title="Outgoing response" date="2025-11-23T16:10:12.498" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 22ms -->
+</step><!-- duration: 1095ms -->

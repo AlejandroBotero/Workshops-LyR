@@ -1,0 +1,11 @@
+<step title="Incoming Request" date="2025-11-23T18:01:27.661" instance="4674be" url="/api/deployments/latest?deployer=OneDeploy&amp;time=2025-11-23_18-00-29Z" method="GET" type="request" pid="851,1,30" Host="hashingworkshoplogica-gjc2bhe2e8fpa3g3.scm.brazilsouth-01.azurewebsites.net" User-Agent="GITHUBACTIONS_DeployWebAppToAzure_5e95d6022cf6a5888ffee81f589163d620e6495c5eb196937077d69850f0d7ef" Authorization="Bea..." Content-Type="application/json; charset=utf-8" Cookie="ARRAffinity=4674be82b396abaf83d02ae5cb9797e3302ed577226c6d832720658f6837fffe;Path=/;HttpOnly;Secure;Domain=hashingworkshoplogica-gjc2bhe2e8fpa3g3.scm.brazilsouth-01.azurewebsites.net; ARRAffinitySameSite=4674be82b396abaf83d02ae5cb9797e3302ed577226c6d832720658f6837fffe;Path=/;HttpOnly;SameSite=None;Secure;Domain=hashingworkshoplogica-gjc2bhe2e8fpa3g3.scm.brazilsouth-01.azurewebsites.net" Content-Length="0" X-ARR-LOG-ID="7ce06005-411b-46db-9d85-baf401e1a080" CLIENT-IP="52.225.25.99:10264" X-SITE-DEPLOYMENT-ID="HashingWorkshopLogica" WAS-DEFAULT-HOSTNAME="hashingworkshoplogica-gjc2bhe2e8fpa3g3.scm.brazilsouth-01.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/deployments/latest?deployer=OneDeploy&amp;time=2025-11-23_18-00-29Z" X-Client-IP="52.225.25.99" X-Client-Port="10264" >
+  <step title="Cleanup Xml Logs" date="2025-11-23T18:01:27.690" >
+    <step title="Cleanup Infos" date="2025-11-23T18:01:27.719" totalFiles="215" totalCleanup="55" /><!-- duration: 12ms -->
+  </step><!-- duration: 60ms -->
+  <step title="DeploymentService.GetResult" date="2025-11-23T18:01:27.781" >
+    <step title="DeploymentService.GetLatestDeployment" date="2025-11-23T18:01:27.791" >
+      <step title="DeploymentManager.GetResults" date="2025-11-23T18:01:27.801" /><!-- duration: 744ms -->
+    </step><!-- duration: 766ms -->
+  </step><!-- duration: 785ms -->
+  <step title="Outgoing response" date="2025-11-23T18:01:28.575" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 21ms -->
+</step><!-- duration: 944ms -->

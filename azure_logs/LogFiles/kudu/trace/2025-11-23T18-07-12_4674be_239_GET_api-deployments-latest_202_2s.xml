@@ -1,0 +1,11 @@
+<step title="Incoming Request" date="2025-11-23T18:07:12.737" instance="4674be" url="/api/deployments/latest?deployer=OneDeploy&amp;time=2025-11-23_18-06-45Z" method="GET" type="request" pid="851,1,32" Host="hashingworkshoplogica-gjc2bhe2e8fpa3g3.scm.brazilsouth-01.azurewebsites.net" User-Agent="GITHUBACTIONS_DeployWebAppToAzure_5e95d6022cf6a5888ffee81f589163d620e6495c5eb196937077d69850f0d7ef" Authorization="Bea..." Content-Type="application/json; charset=utf-8" Cookie="ARRAffinity=4674be82b396abaf83d02ae5cb9797e3302ed577226c6d832720658f6837fffe;Path=/;HttpOnly;Secure;Domain=hashingworkshoplogica-gjc2bhe2e8fpa3g3.scm.brazilsouth-01.azurewebsites.net; ARRAffinitySameSite=4674be82b396abaf83d02ae5cb9797e3302ed577226c6d832720658f6837fffe;Path=/;HttpOnly;SameSite=None;Secure;Domain=hashingworkshoplogica-gjc2bhe2e8fpa3g3.scm.brazilsouth-01.azurewebsites.net" Content-Length="0" X-ARR-LOG-ID="1434d2d1-4381-44e4-8ea9-897bb899d7c2" CLIENT-IP="64.236.133.192:50176" X-SITE-DEPLOYMENT-ID="HashingWorkshopLogica" WAS-DEFAULT-HOSTNAME="hashingworkshoplogica-gjc2bhe2e8fpa3g3.scm.brazilsouth-01.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/deployments/latest?deployer=OneDeploy&amp;time=2025-11-23_18-06-45Z" X-Client-IP="64.236.133.192" X-Client-Port="50176" >
+  <step title="Cleanup Xml Logs" date="2025-11-23T18:07:12.775" >
+    <step title="Cleanup Infos" date="2025-11-23T18:07:12.816" totalFiles="229" totalCleanup="69" /><!-- duration: 20ms -->
+  </step><!-- duration: 73ms -->
+  <step title="DeploymentService.GetResult" date="2025-11-23T18:07:12.885" >
+    <step title="DeploymentService.GetLatestDeployment" date="2025-11-23T18:07:12.888" >
+      <step title="DeploymentManager.GetResults" date="2025-11-23T18:07:12.898" /><!-- duration: 1297ms -->
+    </step><!-- duration: 1385ms -->
+  </step><!-- duration: 1400ms -->
+  <step title="Outgoing response" date="2025-11-23T18:07:14.295" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 69ms -->
+</step><!-- duration: 1647ms -->

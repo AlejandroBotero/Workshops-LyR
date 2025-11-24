@@ -18,9 +18,9 @@ def generate_news_article():
         "lastUpdated": datetime.datetime.now().isoformat(),
     }
 
-def submit_news():
-    url = "http://127.0.0.1:8000/api/submit/"
-    for _ in range(100):
+def submit_news(n=1):
+    url = "http://127.0.0.1:8000/news/submit/"
+    for _ in range(n):
         article = generate_news_article()
         try:
             print("before posting")

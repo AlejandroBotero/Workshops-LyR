@@ -25,7 +25,7 @@ class SSEEventBuilder:
     """
 
     @staticmethod
-    def build_article_event(current_article, last_n=50):
+    def build_article_event(current_article, last_n=5):
         """Create a complete event payload for a new article.
 
         Args:
@@ -145,8 +145,8 @@ class SSEStreamGenerator:
 
     @staticmethod
     def _parse_last_n(request):
-        """Extract ``last_n`` query param, defaulting to 50."""
+        """Extract ``last_n`` query param, defaulting to 5."""
         try:
-            return int(request.GET.get('last_n', '50'))
+            return int(request.GET.get('last_n', '5'))
         except ValueError:
-            return 50
+            return 5
