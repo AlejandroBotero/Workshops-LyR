@@ -1,4 +1,14 @@
 #!/bin/bash
 python manage.py migrate
 python manage.py collectstatic --noinput
-gunicorn --bind=0.0.0.0:8000 --workers=3 --worker-class=gevent --timeout 600 --graceful-timeout 30 news_api.wsgi
+gunicorn --bind=0.0.0.0:8000 \
+  --workers=3 \
+  --worker-class=gevent \
+  --worker-connections=1000 \
+  --timeout 600 \
+  --graceful-timeout 30 \
+  --keep-alive 75 \
+  --access-logfile - \
+  --error-logfile - \
+  --log-level info \
+  news_api.wsgi

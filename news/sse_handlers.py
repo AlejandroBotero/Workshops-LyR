@@ -103,38 +103,51 @@ class SSEStreamGenerator:
         The generator first sends an initial payload (or a placeholder if the DB is empty),
         then subscribes the client to the global ``sse_channel`` and streams new articles.
         """
+        client_id = id(request)
+        print(f"[SSE] New client connected: {client_id}")
         last_n = SSEStreamGenerator._parse_last_n(request)
 
         # ---- Initial payload -------------------------------------------------
         try:
+            print(f"[SSE] {client_id} - Sending initial data...")
             latest_article = News.objects.order_by('-datePublished').first()
             if latest_article:
                 event_data = SSEEventBuilder.build_article_event(latest_article.to_dict(), last_n)
                 yield f"data: {json.dumps(event_data)}\n\n"
+                print(f"[SSE] {client_id} - Initial data sent successfully")
             else:
                 # No articles yet – send a friendly placeholder
                 yield f"data: {json.dumps({'message': 'No articles yet'})}\n\n"
+                print(f"[SSE] {client_id} - No articles, sent placeholder")
         except Exception as e:
             # Log the problem and still keep the stream alive
-            print(f"Error sending initial data: {e}")
+            print(f"[SSE] {client_id} - Error sending initial data: {e}")
             import traceback
             traceback.print_exc()
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
         # ---- Subscribe the client -------------------------------------------
+        print(f"[SSE] {client_id} - Subscribing to channel...")
         client_queue = sse_channel.listen()
+        print(f"[SSE] {client_id} - Subscribed, entering event loop...")
         try:
+            iteration = 0
             while True:
+                iteration += 1
                 try:
                     # Wait for a new article (or timeout for heartbeat)
                     current_article = client_queue.get(timeout=SSEStreamGenerator.HEARTBEAT_TIMEOUT)
+                    print(f"[SSE] {client_id} - Received article, building event...")
                     event_data = SSEEventBuilder.build_article_event(current_article, last_n)
                     yield f"data: {json.dumps(event_data)}\n\n"
+                    print(f"[SSE] {client_id} - Article event sent")
                 except queue.Empty:
                     # Heartbeat keeps the connection alive for proxies/load‑balancers
+                    if iteration % 6 == 0:  # Log every 6th heartbeat (every minute)
+                        print(f"[SSE] {client_id} - Sending heartbeat (iteration {iteration})")
                     yield ":heartbeat\n\n"
                 except Exception as e:
-                    print(f"Error in stream loop: {e}")
+                    print(f"[SSE] {client_id} - Error in stream loop: {e}")
                     import traceback
                     traceback.print_exc()
                     error_payload = {"error": "Failed to build event", "message": str(e)}
@@ -147,14 +160,14 @@ class SSEStreamGenerator:
                     time.sleep(SSEStreamGenerator.SLEEP_INTERVAL)
         except GeneratorExit:
             # Normal client disconnect (e.g., browser navigation)
-            print("Client disconnected (GeneratorExit)")
+            print(f"[SSE] {client_id} - Client disconnected (GeneratorExit)")
         except Exception as e:
-            print(f"Unexpected stream error: {e}")
+            print(f"[SSE] {client_id} - Unexpected stream error: {e}")
             import traceback
             traceback.print_exc()
         finally:
             sse_channel.unlisten(client_queue)
-            print("Client disconnected, listener removed.")
+            print(f"[SSE] {client_id} - Client disconnected, listener removed.")
 
     @staticmethod
     def _parse_last_n(request):
